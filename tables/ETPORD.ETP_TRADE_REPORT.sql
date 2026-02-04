@@ -1,0 +1,43 @@
+create table ETPORD.ETP_TRADE_REPORT
+(
+    TRANS_CODE          NUMBER(10) not null,
+    TRANS_DATE          DATE,
+    SETTLEMENT_DATE     DATE,
+    SEC_SERIAL_ID       NUMBER,
+    ISIN                VARCHAR2(12),
+    BUY_FIRM_SERIAL_ID  NUMBER,
+    BUY_BOOK_KEEPER     VARCHAR2(4),
+    BUY_NIN_CODE        NUMBER,
+    SELL_FIRM_SERIAL_ID NUMBER,
+    SELL_BOOK_KEEPER    VARCHAR2(4),
+    SELL_NIN_CODE       NUMBER,
+    AMOUNT_TRADED       NUMBER(14, 2),
+    GROSS_PRICE         NUMBER(14, 7),
+    SETTLEMENT_VALUE    NUMBER(20, 5),
+    CLEAN_PRICE         NUMBER(12, 7),
+    YIELD_TO_MATURITY   NUMBER(11, 7),
+    ACCRUED_INTEREST    NUMBER(11, 7),
+    CURRENT_YIELD       NUMBER(11, 7),
+    ACCRUAL_PERIOD      NUMBER,
+    STATUS_CODE         NUMBER(2),
+    INSERT_USER         VARCHAR2(20),
+    INSERT_DATE         DATE,
+    UPDATE_USER         VARCHAR2(20),
+    UPDATE_DATE         DATE,
+    REJECT_RESONE       VARCHAR2(4000),
+    PRICE               NUMBER,
+    DAYS_TO_MATURITY    NUMBER,
+    SETTLEMENT_DAYS     NUMBER(2),
+    IS_REPO             NUMBER(1) default 0,
+    REPO_TYPE           VARCHAR2(10)
+)
+/
+| TRANS\_CODE | TRANS\_DATE | SETTLEMENT\_DATE | SEC\_SERIAL\_ID | ISIN | BUY\_FIRM\_SERIAL\_ID | BUY\_BOOK\_KEEPER | BUY\_NIN\_CODE | SELL\_FIRM\_SERIAL\_ID | SELL\_BOOK\_KEEPER | SELL\_NIN\_CODE | AMOUNT\_TRADED | GROSS\_PRICE | SETTLEMENT\_VALUE | CLEAN\_PRICE | YIELD\_TO\_MATURITY | ACCRUED\_INTEREST | CURRENT\_YIELD | ACCRUAL\_PERIOD | STATUS\_CODE | INSERT\_USER | INSERT\_DATE | UPDATE\_USER | UPDATE\_DATE | REJECT\_RESONE | PRICE | DAYS\_TO\_MATURITY | SETTLEMENT\_DAYS | IS\_REPO | REPO\_TYPE |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 279684 | 2026-01-28 | 2026-01-29 | 616 | EGT9980E4Q15 | 1 | 4509 | 454545 | 1 | 4506 | 13138 | 250000.00 | null | 237785.00000 | 0.9511400 | null | null | null | null | 3 | 1 | 2026-01-28 10:48:28 | null | null | null | 25 | null | 1 | 1 | DVP |
+| 410647 | 2026-02-02 | 2026-02-03 | 164 | EGBGR01981F2 | 1 | 4507 | 454545 | 1 | 4506 | 12020 | 100000.00 | 940.8143646 | 94081.43646 | 900.0000000 | 26.9063900 | 40.8143646 | 19.0890000 | 86 | 3 | 1 | 2026-02-02 11:22:41 | null | null | null | 90 | null | 1 | 0 | null |
+| 467059 | 2026-02-04 | 2026-02-09 | 164 | EGBGR01981F2 | 10 | 4501 | 2236327 | 10 | 4501 | 2236326 | 50000.00 | 843.6618785 | 42183.09000 | 800.0000000 | 38.6857800 | 43.6618785 | 21.4750000 | 92 | 3 | 14 | 2026-02-04 12:23:39 | null | null | null | 80 | null | 3 | 1 | DVP-TAX |
+| 467060 | 2026-02-04 | 2026-02-09 | 164 | EGBGR01981F2 | 10 | 4501 | 2236327 | 10 | 4501 | 2236326 | 50000.00 | 843.6618785 | 42183.09000 | 800.0000000 | 38.6857800 | 43.6618785 | 21.4750000 | 92 | 3 | 14 | 2026-02-04 13:13:52 | null | null | null | 80 | null | 3 | 1 | DVP-TAX |
+| 467061 | 2026-02-04 | 2026-02-09 | 164 | EGBGR01981F2 | 10 | 4501 | 2236327 | 10 | 4501 | 2236326 | 50000.00 | 843.6618785 | 42183.09000 | 800.0000000 | 38.6857800 | 43.6618785 | 21.4750000 | 92 | 3 | 14 | 2026-02-04 13:16:08 | null | null | null | 80 | null | 3 | 1 | DVP-TAX |
+| 325547 | 2026-02-01 | 2026-02-02 | 599 | EGT9980H2Q10 | 1 | 4508 | 454545 | 1 | 4506 | 12020 | 250000.00 | null | 244967.50000 | 0.9798700 | null | null | null | null | 3 | 1 | 2026-02-01 15:35:46 | null | null | null | 50 | null | 1 | 0 | null |
+
