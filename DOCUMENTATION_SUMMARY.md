@@ -138,6 +138,7 @@
 **Support Tables:**
 - ETP_API_ERROR_LOG (error logging)
 - etp_swift_track (SWIFT messages)
+- ETP_ORDER_STATUS (status code reference - 30+ codes defined)
 
 ### Views Documented (5)
 - ETP_ORDER_BUY_OUST_VIEW (outstanding buys)

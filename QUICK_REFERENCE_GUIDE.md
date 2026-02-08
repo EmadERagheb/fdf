@@ -119,16 +119,47 @@ ORDER BY COUNT(*) DESC;
 
 ## 🔍 Common Issues & Solutions
 
-### Issue: Order Rejected - Status Code Guide
-| Status | Name | Meaning |
-|--------|------|---------|
-| 772 | New | Newly inserted order |
-| 775 | Amended | Order has been modified |
-| 776 | Canceled | Order cancelled by user |
-| 779 | Partially Matched | Some quantity traded |
-| 786 | Suspended | Temporarily inactive |
-| 789 | Resumed | Reactivated from suspend |
-| 790 | Fully Matched | Complete execution |
+### Issue: Order Rejected - Complete Status Code Reference
+
+**Status Codes Used in API_INSERT_ORDER & API_AMEND_CANCEL_ORDER:**
+
+| Code | Official Name | Description | In Package? |
+|------|---------------|-------------|-------------|
+| **772** | **Queued - OPEN** | Newly inserted order, ready for matching | ✅ Used |
+| **775** | **Changed** | Order has been amended | ✅ Used |
+| **776** | **Canceled** | Order cancelled by user | ✅ Used |
+| **779** | **Filled - OPEN** | Partially filled, still has remaining quantity | ✅ Used |
+| **786** | **Complete Fill** | Order fully matched/executed | ✅ Used |
+| **789** | **Suspended** | Order temporarily inactive | ✅ Used |
+| **790** | **Resumed - OPEN** | Reactivated from suspended state | ✅ Used |
+
+**Other Status Codes (Reference):**
+
+| Code | Name | Purpose |
+|------|------|---------|
+| 773 | Reject AtLoad | Rejected during load process |
+| 774 | Global CXL | Global cancellation |
+| 777 | FOK | Fill or Kill order type |
+| 778 | Expired | Order expired |
+| 780 | Trade CXL | Trade cancellation |
+| 782 | Spot CXL | Spot cancellation |
+| 783 | Accepted | Order accepted |
+| 784 | Rej on Activate | Rejected on activation |
+| 785 | Activated | Order activated |
+| 787 | Family Changed | Family modification |
+| 788 | Price Adjusted | Price adjustment |
+| 791 | Global Suspend | Global suspension |
+| 792 | Global Resume | Global resumption |
+| 793 | Rej on Resume | Rejected on resume |
+| 794 | CFO From | Carry forward from |
+| 795 | CFO To | Carry forward to |
+| 796 | Reinstated | Order reinstated |
+| 797 | Move From | Move source |
+| 798 | Move To | Move destination |
+| 800 | ErrorCorrection | Error correction |
+| 804 | Corp Act Susp | Corporate action suspension |
+
+**Note:** Status codes marked with "-OPEN" (772, 779, 790) indicate outstanding orders visible in `ETP_ORDER_XXX_OUST_VIEW`
 
 ### Issue: Lock Contention
 **Symptom:** Orders queuing for same security  
@@ -223,12 +254,21 @@ CREATE BITMAP INDEX sell_status_idx ON ETP_ORDER_SELL(ORDER_STATUS);
 ## 🔄 Order Lifecycle
 
 ```
-NEW (772) → AMENDED (775) → PARTIALLY_MATCHED (779) → FULLY_MATCHED (790)
+QUEUED (772) → CHANGED (775) → FILLED (779) → COMPLETE_FILL (786)
                     ↓
                 CANCELED (776)
                     ↓
-                SUSPENDED (786) → RESUMED (789)
+                SUSPENDED (789) → RESUMED (790)
 ```
+
+**Status Descriptions:**
+- **772 (Queued)**: New order ready for matching
+- **775 (Changed)**: Order amended (price/volume/bookkeeper)
+- **776 (Canceled)**: Order cancelled by user
+- **779 (Filled)**: Partially filled, remaining qty > 0
+- **786 (Complete Fill)**: Fully matched/executed
+- **789 (Suspended)**: Order temporarily inactive
+- **790 (Resumed)**: Reactivated from suspended state
 
 ### Concurrency Control
 

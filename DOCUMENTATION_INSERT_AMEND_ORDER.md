@@ -511,7 +511,7 @@ graph LR
 | ORDER_ID | NUMBER | Unique order identifier | Auto-generated from sequence |
 | FIRM_SERIAL_ID | NUMBER | FK to ETP_FIRM | Identifies the firm |
 | SEC_SERIAL_ID | NUMBER | FK to ETP_SECURITIES | Security being traded |
-| ORDER_STATUS | VARCHAR2(3) | Order status code | 772=Queued, 775=Changed, 776=Canceled, 779=Partially Filled, 786=Complete Fill |
+| ORDER_STATUS | VARCHAR2(3) | Order status code | 772=Queued, 775=Changed, 776=Canceled, 779=Filled, 786=Complete Fill, 789=Suspended, 790=Resumed |
 | INSERT_DATE | DATE | Order creation timestamp | Used for time priority |
 | MODIFIED_DATE | DATE | Last modification timestamp | NULL for new orders |
 | ORDER_TYPE | VARCHAR2(1) | 'B' or 'S' | Buy or Sell |
@@ -1518,6 +1518,143 @@ INSERT INTO ETP_PERFORMANCE_LOG VALUES (
 | 1 | Active (Buy only) | ✗ | ✓ |
 | 2 | Active (Sell only) | ✓ | ✗ |
 | Other | Suspended | ✗ | ✗ |
+
+---
+
+## Order Status Reference
+
+### Complete ORDER_STATUS Code List
+
+**ETP_ORDER_STATUS Table Structure:**
+```sql
+CREATE TABLE ETPORD.ETP_ORDER_STATUS (
+    ORDER_STATUS          VARCHAR2(3),
+    ORDER_STATUS_DESC_ARB VARCHAR2(40),
+    ORDER_STATUS_DESC_ENG VARCHAR2(40)
+)
+```
+
+### Status Codes Used in Package
+
+**Primary statuses used by API_INSERT_ORDER and API_AMEND_CANCEL_ORDER:**
+
+| Code | Official Name | Description | Used In | Outstanding? |
+|------|---------------|-------------|---------|--------------|
+| **772** | **Queued - OPEN** | New order ready for matching | API_INSERT_ORDER | ✅ Yes |
+| **775** | **Changed** | Order amended (price/volume/bookkeeper) | API_AMEND_CANCEL_ORDER | ✅ Yes |
+| **776** | **Canceled** | Order cancelled by user request | API_AMEND_CANCEL_ORDER | ❌ No |
+| **779** | **Filled - OPEN** | Partially filled, remaining qty > 0 | etp_match_proc | ✅ Yes |
+| **786** | **Complete Fill** | Order fully matched/executed | etp_match_proc | ❌ No |
+| **789** | **Suspended** | Order temporarily inactive | etp_update_order | ❌ No |
+| **790** | **Resumed - OPEN** | Reactivated from suspended state | etp_update_order | ✅ Yes |
+
+**Outstanding orders** (visible in `ETP_ORDER_XXX_OUST_VIEW`) have status: 772, 775, 779, or 790
+
+### View Filter Logic
+
+```sql
+-- ETP_ORDER_BUY_OUST_VIEW / ETP_ORDER_SELL_OUST_VIEW
+WHERE TRUNC(SYSDATE) = TRUNC(INSERT_DATE)
+  AND ORDER_STATUS != '776'  -- Not Canceled
+  AND ORDER_STATUS != '778'  -- Not Expired
+  AND ORDER_STATUS != '773'  -- Not Reject AtLoad
+  AND ORDER_STATUS != '789'  -- Not Suspended
+  AND ORDER_STATUS != '786'  -- Not Complete Fill
+  AND REM_QNTY <> 0
+```
+
+**Equivalent positive filter (recommended for performance):**
+```sql
+WHERE INSERT_DATE >= TRUNC(SYSDATE)
+  AND INSERT_DATE < TRUNC(SYSDATE) + 1
+  AND ORDER_STATUS IN ('772', '775', '779', '790')
+  AND REM_QNTY <> 0
+```
+
+### Complete Status Reference
+
+**All status codes defined in ETP_ORDER_STATUS:**
+
+| Code | Name | Purpose | Category |
+|------|------|---------|----------|
+| 772 | Queued | New order ready for matching | Active |
+| 773 | Reject AtLoad | Rejected during load process | Rejected |
+| 774 | Global CXL | Global cancellation | Canceled |
+| 775 | Changed | Order amended | Active |
+| 776 | Canceled | User-initiated cancellation | Canceled |
+| 777 | FOK | Fill or Kill order type | Order Type |
+| 778 | Expired | Order expired (time-based) | Expired |
+| 779 | Filled | Partially filled, still active | Active |
+| 780 | Trade CXL | Trade cancellation | Canceled |
+| 782 | Spot CXL | Spot cancellation | Canceled |
+| 783 | Accepted | Order accepted | Active |
+| 784 | Rej on Activate | Rejected during activation | Rejected |
+| 785 | Activated | Order activated | Active |
+| 786 | Complete Fill | Fully matched/executed | Completed |
+| 787 | Family Changed | Family modification | Modified |
+| 788 | Price Adjusted | Price adjustment | Modified |
+| 789 | Suspended | Temporarily inactive | Suspended |
+| 790 | Resumed | Reactivated from suspension | Active |
+| 791 | Global Suspend | Global suspension | Suspended |
+| 792 | Global Resume | Global resumption | Active |
+| 793 | Rej on Resume | Rejected on resume attempt | Rejected |
+| 794 | CFO From | Carry forward source | Administrative |
+| 795 | CFO To | Carry forward destination | Administrative |
+| 796 | Reinstated | Order reinstated | Active |
+| 797 | Move From | Move source | Administrative |
+| 798 | Move To | Move destination | Administrative |
+| 800 | ErrorCorrection | Error correction | Administrative |
+| 804 | Corp Act Susp | Corporate action suspension | Suspended |
+
+### Status Transition Flow
+
+```mermaid
+graph LR
+    NEW[772: Queued] --> CHANGED[775: Changed]
+    NEW --> FILLED[779: Filled]
+    NEW --> CANCELED[776: Canceled]
+    NEW --> SUSPENDED[789: Suspended]
+    
+    CHANGED --> FILLED
+    CHANGED --> CANCELED
+    CHANGED --> SUSPENDED
+    
+    FILLED --> COMPLETE[786: Complete Fill]
+    FILLED --> CHANGED
+    FILLED --> CANCELED
+    
+    SUSPENDED --> RESUMED[790: Resumed]
+    RESUMED --> FILLED
+    RESUMED --> CHANGED
+    RESUMED --> CANCELED
+    
+    style NEW fill:#e1f5ff
+    style CHANGED fill:#fff4e6
+    style FILLED fill:#e6f3e6
+    style COMPLETE fill:#d4edda
+    style CANCELED fill:#ffcccc
+    style SUSPENDED fill:#f0f0f0
+    style RESUMED fill:#e1f5ff
+```
+
+**Typical Order Lifecycle:**
+1. **772 (Queued)** → New order inserted
+2. **775 (Changed)** → Optional amendments
+3. **779 (Filled)** → Partial match occurs
+4. **786 (Complete Fill)** → Fully executed
+
+**Alternative paths:**
+- **776 (Canceled)** → User cancels before execution
+- **789 (Suspended)** → Order temporarily paused
+- **790 (Resumed)** → Reactivated, can continue matching
+
+### Notes on Unused Status Codes
+
+**Status 773 (Reject AtLoad)** and **Status 778 (Expired):**
+- Defined in ETP_ORDER_STATUS table
+- Filtered out in outstanding order views
+- Not actively used in API_INSERT_ORDER or API_AMEND_CANCEL_ORDER
+- May be legacy statuses or reserved for future use
 
 ---
 
