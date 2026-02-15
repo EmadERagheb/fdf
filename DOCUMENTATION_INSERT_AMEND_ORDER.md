@@ -238,8 +238,12 @@ graph TD
 ```mermaid
 graph TB
     subgraph External["External Systems"]
-        CLIENT_DB[(CLIENT<br/>Database<br/>@coding)]
-        SWIFT[SWIFT<br/>Messaging<br/>System]
+        CLIENT_DB[("CLIENT
+        Database
+        @coding")]
+        SWIFT["SWIFT
+        Messaging
+        System"]
     end
     
     subgraph API["API Entry Points"]
